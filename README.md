@@ -1,5 +1,6 @@
 # Projet de semestre DIL : Générateur de site web statique
-## J. Bailat, H. Huart, T. Mirabile & T. Praz
+
+## J. Bailat, H. Huart, T. Mirabile & T. Praz
 
 <hr/>
 
