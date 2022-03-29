@@ -31,6 +31,12 @@ public class SubcommandsMethods implements Callable<Integer> {
         return 0;
     }
 
+    @Command(name = "-version")
+    public Integer version() {
+        System.out.println(Utils.getFullName());
+        return 0;
+    }
+
     @Override
     public Integer call() {
         System.out.println("Subcommand needed: 'new', 'clean', 'build' or 'serve'");
