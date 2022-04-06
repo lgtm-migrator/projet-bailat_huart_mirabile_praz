@@ -4,7 +4,7 @@ import ch.heigvd.dil.commands.*;
 import picocli.CommandLine;
 import java.util.concurrent.Callable;
 
-@CommandLine.Command(name = "sitegen",
+@CommandLine.Command(name = "statique",
 subcommands = {
         Init.class,
         Build.class,
