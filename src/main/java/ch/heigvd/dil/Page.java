@@ -2,6 +2,7 @@ package ch.heigvd.dil;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class Page {
@@ -45,5 +46,9 @@ public class Page {
 
     public void initPageFile() throws FileNotFoundException {
         Utils.writeYamlFile(this, this.filePath.toFile());
+    }
+
+    public void appendContent(String content) throws IOException {
+        Utils.appendToFile(content, this.filePath.toFile());
     }
 }
