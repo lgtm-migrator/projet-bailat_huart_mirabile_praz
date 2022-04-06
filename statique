@@ -1,2 +1,2 @@
-#!/usr/bin/sh
-java -jar "target/statique-0.0.1.jar" "$@"
+#!/bin/sh
+java -jar "statique-0.0.1.jar" "$@"
