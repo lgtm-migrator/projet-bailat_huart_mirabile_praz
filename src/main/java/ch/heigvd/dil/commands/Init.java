@@ -34,7 +34,6 @@ public class Init implements Callable<Integer> {
             throw new FileAlreadyExistsException("The given path already exists.");
         } else {
             Files.createDirectory(sitePath);
-
             Files.createFile(configFilePath);
             Files.createFile(mainPagePath);
         }
@@ -53,6 +52,13 @@ public class Init implements Callable<Integer> {
 
         index.setFilePath(mainPagePath);
         index.initPageFile();
+        StringBuilder content = new StringBuilder();
+        content.append("---\n");
+        content.append("# Hello World\n");
+        content.append("## Bienvenue sur le générateur de sites web \"statique\"\n");
+        content.append("Ceci est le premier article.\n");
+
+        index.appendContent(content.toString());
 
         return 0;
     }
