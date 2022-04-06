@@ -8,7 +8,8 @@ import java.util.concurrent.Callable;
 subcommands = {
         Init.class,
         Build.class,
-        Clean.class
+        Clean.class,
+        Version.class
 })
 public class Main implements Callable<Integer> {
 
