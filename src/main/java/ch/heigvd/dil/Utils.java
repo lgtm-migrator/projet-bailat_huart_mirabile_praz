@@ -25,7 +25,7 @@ public class Utils {
     }
 
     public static String getFullName() {
-        return String.format("%s v%s\n%s\n", getExecutableName(), getVersion(), COPYRIGHT_TEXT);
+        return String.format("%s v%s\n%s", getExecutableName(), getVersion(), COPYRIGHT_TEXT);
     }
   
     public static void writeYamlFile(Object o, File filePath) throws FileNotFoundException {
