@@ -5,7 +5,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "sitegen",
+    name = "statique",
     subcommands = {Init.class, Build.class, Clean.class, Version.class})
 public class Main implements Callable<Integer> {
 
@@ -16,7 +16,7 @@ public class Main implements Callable<Integer> {
 
   @Override
   public Integer call() {
-    System.out.println("Subcommand needed: 'init', 'clean' or 'build'");
+    System.out.println("Unknown command, try 'statique build|clean|init|-version'");
     return 0;
   }
 }
