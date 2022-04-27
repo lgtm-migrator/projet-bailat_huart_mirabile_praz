@@ -1,43 +1,35 @@
 package ch.heigvd.dil.commands;
 
-import java.io.File;
-import java.util.concurrent.Callable;
+import ch.heigvd.dil.Utils;
 import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
+
 @Command(name = "clean", description = "Clean a site (removing files under /build")
 public class Clean implements Callable<Integer> {
-
-  @CommandLine.Parameters(paramLabel = "PATH", description = "Path to site")
-  File[] directories;
-
-  File buildDir;
+  @CommandLine.Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
+  private Path target;
 
   @Override
   public Integer call() throws Exception {
+    System.out.printf("Cleaning site at \"%s\" ...\n", target);
 
-    // set a default value if no parameters
-    // TODO: Try to use default value in CommandLine.parameter instead
-    if (directories == null) {
-      directories = new File[1];
-      directories[0] = new File(System.getProperty("user.dir") + "/build");
+    if (!Files.isDirectory(target)) {
+      System.out.printf(Utils.Messages.NOT_DIR, target);
+      return 1;
     }
 
-    for (File directory : directories) {
-      buildDir = new File(directory.getAbsolutePath() + "/build");
+    Path build = target.resolve(Utils.Paths.BUILD_FOLDER);
 
-      if (!buildDir.isDirectory()) {
-        System.out.println("Oops ! " + buildDir.getPath() + " seems not to be a valid site path !");
-        System.out.println("Nothing has been done.");
-        return 1;
-      }
-
-      System.out.println("Cleaning site " + buildDir.getPath() + " ...");
-      FileUtils.cleanDirectory(buildDir);
-      System.out.println("Done !");
+    if (Files.isDirectory(build)) {
+      FileUtils.cleanDirectory(build.toFile());
     }
 
+    System.out.println("Cleaning successful!");
     return 0;
   }
 }

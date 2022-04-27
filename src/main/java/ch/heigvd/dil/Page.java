@@ -1,10 +1,32 @@
 package ch.heigvd.dil;
 
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
+
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class Page {
+
+  private static Representer representer;
+
+  static {
+    Representer representer =
+        new Representer() {
+          @Override
+          protected Set<Property> getProperties(Class<?> type) {
+            Set<Property> properties = super.getProperties(type);
+            return properties.stream()
+                .filter(v -> !v.getName().equals("filePath"))
+                .collect(Collectors.toSet());
+          }
+        };
+    representer.addClassTag(Page.class, Tag.MAP);
+  }
 
   private Path filePath;
   private String title;
@@ -44,7 +66,7 @@ public class Page {
   }
 
   public void initPageFile() throws FileNotFoundException {
-    Utils.writeYamlFile(this, this.filePath.toFile());
+    Utils.writeYamlFile(this, this.filePath.toFile(), representer);
   }
 
   public void appendContent(String content) throws IOException {
