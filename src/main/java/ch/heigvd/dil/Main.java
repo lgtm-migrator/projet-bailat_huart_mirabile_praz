@@ -7,7 +7,6 @@ import ch.heigvd.dil.commands.Version;
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
-import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "statique",

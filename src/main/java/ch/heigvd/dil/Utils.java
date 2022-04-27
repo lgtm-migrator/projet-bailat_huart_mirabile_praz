@@ -1,9 +1,10 @@
 package ch.heigvd.dil;
 
-import java.io.*;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.representer.Representer;
+
+import java.io.*;
 
 public class Utils {
   private static final String EXECUTABLE_NAME = "statique";
