@@ -1,7 +1,5 @@
 name: Java CD
 
-name: Publish Release
-
 on:
   push:
     tags:
