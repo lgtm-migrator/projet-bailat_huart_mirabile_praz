@@ -4,9 +4,8 @@ import ch.heigvd.dil.commands.Build;
 import ch.heigvd.dil.commands.Clean;
 import ch.heigvd.dil.commands.Init;
 import ch.heigvd.dil.commands.Version;
-import picocli.CommandLine;
-
 import java.util.concurrent.Callable;
+import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "statique",

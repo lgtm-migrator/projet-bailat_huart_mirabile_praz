@@ -3,9 +3,6 @@ package ch.heigvd.dil.commands;
 import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Page;
 import ch.heigvd.dil.Utils;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +10,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.concurrent.Callable;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "init")
 public class Init implements Callable<Integer> {

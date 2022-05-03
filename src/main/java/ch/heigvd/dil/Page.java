@@ -1,14 +1,13 @@
 package ch.heigvd.dil;
 
-import org.yaml.snakeyaml.introspector.Property;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
 public class Page {
 

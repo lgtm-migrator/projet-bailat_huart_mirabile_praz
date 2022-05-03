@@ -1,12 +1,6 @@
 package ch.heigvd.dil.commands;
 
 import ch.heigvd.dil.Utils;
-import org.apache.commons.io.FilenameUtils;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -16,6 +10,11 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "build")
 public class Build implements Callable<Integer> {
