@@ -27,7 +27,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: Release v{ ${GITHUB_REF#refs/*/} }
           body: Mon génial texte de release
           files: |
             *.tar.zst
