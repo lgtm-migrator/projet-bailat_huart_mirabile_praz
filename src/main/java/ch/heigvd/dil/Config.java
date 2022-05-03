@@ -49,6 +49,6 @@ public class Config {
   }
 
   public void writeConfigFile(File path) throws FileNotFoundException {
-    Utils.writeYamlFile(this, path);
+    Utils.writeYamlFile(this, path, null);
   }
 }

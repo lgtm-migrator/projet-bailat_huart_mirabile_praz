@@ -2,7 +2,7 @@ package ch.heigvd.dil.commands;
 
 import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Page;
-import java.nio.file.FileAlreadyExistsException;
+import ch.heigvd.dil.Utils;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -15,22 +15,22 @@ import picocli.CommandLine.Parameters;
 
 @Command(name = "init")
 public class Init implements Callable<Integer> {
+  public final String MAINPAGE_FILENAME = "index.md";
 
-  private final String CONFIG_FILENAME = "config.yaml";
-  private final String MAINPAGE_FILENAME = "index.md";
-
-  @Parameters(index = "0", description = "Path to the website folder")
+  @Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
   private String path;
 
   @Override
   public Integer call() throws Exception {
-    System.out.println("Creating new site...");
+    System.out.printf("Creating new site at \"%s\" ...\n", path);
+
     Path sitePath = Paths.get(path);
-    Path configFilePath = sitePath.resolve(CONFIG_FILENAME);
+    Path configFilePath = sitePath.resolve(Utils.Paths.CONFIG_FILENAME);
     Path mainPagePath = sitePath.resolve(MAINPAGE_FILENAME);
 
     if (Files.exists(sitePath)) {
-      throw new FileAlreadyExistsException("The given path already exists.");
+      System.out.printf(Utils.Messages.ALREADY_EXISTS, sitePath);
+      return 1;
     } else {
       Files.createDirectory(sitePath);
       Files.createFile(configFilePath);
@@ -52,13 +52,14 @@ public class Init implements Callable<Integer> {
     index.setFilePath(mainPagePath);
     index.initPageFile();
     StringBuilder content = new StringBuilder();
-    content.append("---\n");
+    content.append(Utils.META_SEPARATOR).append("\n");
     content.append("# Hello World\n");
     content.append("## Bienvenue sur le générateur de sites web \"statique\"\n");
     content.append("Ceci est le premier article.\n");
 
     index.appendContent(content.toString());
 
+    System.out.println("Creation successful!");
     return 0;
   }
 }
