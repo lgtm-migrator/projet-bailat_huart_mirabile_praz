@@ -10,5 +10,7 @@ jobs:
     steps:
       - name: Create GitHub release
         uses: Roang-zero1/github-create-release-action@master
+        with:
+          changelog_file: "/github/workspace/CHANGELOG.md"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}$
