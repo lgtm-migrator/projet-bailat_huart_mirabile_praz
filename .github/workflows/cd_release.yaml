@@ -17,13 +17,17 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Build with Maven
-        run: mvn clean assembly:assembly -DdescriptorId=jar-with-dependencies
-      - name: Test env
-        run: zstd --version && tar --version && zip --version
+        run: |
+          mvn clean assembly:assembly -DdescriptorId=jar-with-dependencies
+          cp *.jar .
+      - name: Package
+        run: |
+          tar cf statique-${GITHUB_REF#refs/*/}.tar.zst --zstd statique *.jar
+          zip -r statique-${GITHUB_REF#refs/*/}.zip statique *.jar
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            target/*.jar
-          
+            *.tar.zst
+            *.zip
