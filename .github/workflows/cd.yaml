@@ -1,6 +1,8 @@
 name: Java CD
 
 on: push
+  tags:
+    - "**"
 jobs:
   release:
     runs-on: ubuntu-latest
