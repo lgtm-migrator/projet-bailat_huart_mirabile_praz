@@ -1,16 +1,19 @@
 name: Java CD
 
-on: 
+name: Publish Release
+
+on:
   push:
     tags:
-      - "**"
+      - '**'
 jobs:
-  release:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Create GitHub release
-        uses: Roang-zero1/github-create-release-action@master
-        with:
-          changelog_file: CHANGELOG.md
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}$
+    - uses: actions/checkout@v3
+    - name: Create a Release
+      uses: elgohr/Github-Release-Action@v4
+      env:
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+      with:
+        title: Ma géniale release
