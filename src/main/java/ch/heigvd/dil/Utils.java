@@ -59,5 +59,6 @@ public class Utils {
   public static class Paths {
     public static final String CONFIG_FILENAME = "config.yaml";
     public static final String BUILD_FOLDER = "build";
+    public static final String TEMPLATE_FOLDER = "template";
   }
 }

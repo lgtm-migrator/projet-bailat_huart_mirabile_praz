@@ -23,6 +23,7 @@ public class Build implements Callable<Integer> {
 
   private Path absoluteRoot;
   private Path build;
+  private Path templates;
   private final Parser parser = Parser.builder().build();
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
 
@@ -43,6 +44,7 @@ public class Build implements Callable<Integer> {
     }
 
     build = root.resolve(Utils.Paths.BUILD_FOLDER);
+    templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     if (!Files.exists(build)) {
       Files.createDirectory(build);
@@ -50,15 +52,11 @@ public class Build implements Callable<Integer> {
 
     Path config = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
 
+    List<Path> excluded = List.of(build.toAbsolutePath(), config, templates.toAbsolutePath());
+
     List<Path> filtered =
         Files.list(root)
-            .filter(
-                v -> {
-                  boolean isNotBuild = !v.toAbsolutePath().equals(build.toAbsolutePath());
-                  boolean isNotConfig = !v.toAbsolutePath().equals(config);
-
-                  return isNotBuild && isNotConfig;
-                })
+            .filter(v -> !excluded.contains(v.toAbsolutePath()))
             .collect(Collectors.toList());
 
     int result = 0;
@@ -114,7 +112,6 @@ public class Build implements Callable<Integer> {
 
           Files.write(target, html.getBytes(StandardCharsets.UTF_8));
         }
-
       } else {
         System.out.printf("Copying \"%s\".\n", absoluteRoot.relativize(file));
         Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
