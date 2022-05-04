@@ -3,6 +3,7 @@ package ch.heigvd.dil;
 import java.io.*;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
 public class Utils {
@@ -30,16 +31,16 @@ public class Utils {
     options.setCanonical(false);
     options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
 
-    Yaml yaml;
-
     if (representer == null) {
-      yaml = new Yaml(options);
-    } else {
-      yaml = new Yaml(representer, options);
+      representer = new Representer();
     }
+    representer.addClassTag(Object.class, Tag.MAP);
+
+    Yaml yaml = new Yaml(representer, options);
 
     PrintWriter writer = new PrintWriter(filePath);
-    yaml.dump(o, writer);
+    writer.write(yaml.dumpAs(o, Tag.MAP, DumperOptions.FlowStyle.BLOCK));
+    writer.close();
   }
 
   public static void appendToFile(String s, File filePath) throws IOException {
