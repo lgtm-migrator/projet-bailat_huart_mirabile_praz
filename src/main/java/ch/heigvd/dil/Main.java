@@ -9,18 +9,21 @@ subcommands = {
         Init.class,
         Build.class,
         Clean.class,
+        Serve.class,
         Version.class
 })
 public class Main implements Callable<Integer> {
 
     public static void main(String[] args) {
-        int rc = new CommandLine(new Main()).execute(args);
-        System.exit(rc);
+        int exitCode = new CommandLine(new Main()).execute(args);
+        if (exitCode != 0) {
+            System.exit(exitCode);
+        }
     }
 
     @Override
     public Integer call() {
-        System.out.println("Unknown command, try 'statique build|clean|init|-version'");
+        System.out.println("Unknown command, try 'statique build|clean|init|serve|-version'");
         return 0;
     }
 }
