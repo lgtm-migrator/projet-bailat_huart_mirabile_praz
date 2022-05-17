@@ -23,7 +23,8 @@ public class Build implements Callable<Integer> {
 
   private Path absoluteRoot;
   private Path build;
-  private Path templates;
+
+  private Config config;
   private final Parser parser = Parser.builder().build();
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
 
@@ -44,15 +45,22 @@ public class Build implements Callable<Integer> {
     }
 
     build = root.resolve(Utils.Paths.BUILD_FOLDER);
-    templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
+    Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     if (!Files.exists(build)) {
       Files.createDirectory(build);
     }
 
-    Path config = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
+    Path configPath = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
 
-    List<Path> excluded = List.of(build.toAbsolutePath(), config, templates.toAbsolutePath());
+    if (!Files.exists(configPath)) {
+      System.out.printf("Config not found.\n");
+      return 1;
+    }
+
+    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+
+    List<Path> excluded = List.of(build.toAbsolutePath(), configPath, templates.toAbsolutePath());
 
     List<Path> filtered =
         Files.list(root)
@@ -104,6 +112,8 @@ public class Build implements Callable<Integer> {
         } else {
           String metadata =
               fileContent.substring(0, separatorIndex); // Metadata is currently ignored
+
+          Page page = Utils.parseYaml(new ByteArrayInputStream(metadata.getBytes()), Page.class);
 
           String content = fileContent.substring(separatorIndex + Utils.META_SEPARATOR.length());
 

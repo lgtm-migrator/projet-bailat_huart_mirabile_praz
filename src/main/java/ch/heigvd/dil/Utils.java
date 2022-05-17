@@ -3,6 +3,7 @@ package ch.heigvd.dil;
 import java.io.*;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
@@ -48,6 +49,15 @@ public class Utils {
     BufferedWriter bw = new BufferedWriter(fw);
     bw.write(s);
     bw.close();
+  }
+
+  public static <T> T parseYamlFile(File filePath, Class<T> type) throws FileNotFoundException {
+    return parseYaml(new FileInputStream(filePath), type);
+  }
+
+  public static <T> T parseYaml(InputStream stream, Class<T> type) {
+    Yaml yaml = new Yaml(new Constructor(type));
+    return yaml.load(stream);
   }
 
   public static class Messages {
