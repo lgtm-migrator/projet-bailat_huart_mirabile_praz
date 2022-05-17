@@ -3,17 +3,12 @@ package ch.heigvd.dil.commands;
 import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Page;
 import ch.heigvd.dil.Utils;
-import com.github.jknack.handlebars.Context;
-import com.github.jknack.handlebars.EscapingStrategy;
-import com.github.jknack.handlebars.Handlebars;
-import com.github.jknack.handlebars.Helper;
-import com.github.jknack.handlebars.Options;
-import com.github.jknack.handlebars.Template;
+import com.github.jknack.handlebars.*;
+import com.github.jknack.handlebars.cache.ConcurrentMapTemplateCache;
 import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.MethodValueResolver;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -36,14 +31,11 @@ public class Build implements Callable<Integer> {
 
   private Path absoluteRoot;
   private Path build;
-
   private Config config;
   private final Parser parser = Parser.builder().build();
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
-
-  private Handlebars handlebars = new Handlebars();
-  private Template layout;
-
+  private Handlebars handlebars;
+  private Template layout_template;
   private boolean useTemplates = false;
 
   @Override
@@ -63,7 +55,6 @@ public class Build implements Callable<Integer> {
     }
 
     build = root.resolve(Utils.Paths.BUILD_FOLDER);
-    Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     if (!Files.exists(build)) {
       Files.createDirectory(build);
@@ -72,11 +63,13 @@ public class Build implements Callable<Integer> {
     Path configPath = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
 
     if (!Files.exists(configPath)) {
-      System.out.printf("Config not found.\n");
+      System.out.printf("Config not found at \"%s\".\n", configPath);
       return 1;
     }
 
     config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+
+    Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     List<Path> excluded = List.of(build.toAbsolutePath(), configPath, templates.toAbsolutePath());
 
@@ -87,27 +80,25 @@ public class Build implements Callable<Integer> {
 
     if (Files.exists(templates)) {
       TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
-      loader.setSuffix(".html");
+      loader.setSuffix(Utils.TEMPLATES_SUFFIX);
 
-      handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
+      handlebars =
+          new Handlebars(loader).with(EscapingStrategy.NOOP).with(new ConcurrentMapTemplateCache());
       handlebars.registerHelper(
           "include",
           new Helper<String>() {
             @Override
             public Object apply(String s, Options options) throws IOException {
-              System.out.println("include helper " + s);
-
               String ext = "." + FilenameUtils.getExtension(s);
-              if (loader.getSuffix().equals(ext)) {
+              if (Utils.TEMPLATES_SUFFIX.equals(ext)) {
                 Template template = options.handlebars.compile(FilenameUtils.getBaseName(s));
                 return template.apply(options.context);
               }
-
               return null;
             }
           });
 
-      layout = handlebars.compile("layout");
+      layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
 
       useTemplates = true;
     }
@@ -136,11 +127,12 @@ public class Build implements Callable<Integer> {
         }
       }
     } else {
-      String name = file.toString();
-      String extension = FilenameUtils.getExtension(name);
+      String extension = FilenameUtils.getExtension(file.toString());
 
       Path target = build.resolve(absoluteRoot.relativize(file));
       ensureParent(target);
+
+      Path filename = absoluteRoot.relativize(file);
 
       if ("md".equals(extension)) {
         target = Paths.get(target.toString().replaceAll(extension + "$", "html"));
@@ -155,38 +147,37 @@ public class Build implements Callable<Integer> {
           System.out.printf("File \"%s\" is not formatted correctly.\n", file);
           return 1;
         } else {
-          String metadata =
-              fileContent.substring(0, separatorIndex); // Metadata is currently ignored
+          String metadata = fileContent.substring(0, separatorIndex);
 
-          Page page = Utils.parseYaml(new ByteArrayInputStream(metadata.getBytes()), Page.class);
+          Page page = Utils.parseYamlString(metadata, Page.class);
 
           String content = fileContent.substring(separatorIndex + Utils.META_SEPARATOR.length());
 
           String result = content;
 
           if (useTemplates) {
-            System.out.printf("Applying templates on \"%s\".\n", absoluteRoot.relativize(file));
+            System.out.printf("Applying templates on \"%s\".\n", filename);
 
             TemplateContext context = new TemplateContext();
-            context.page = page;
             context.site = config;
+            context.page = page;
             context.content = content;
 
-            Context finalContext =
+            Context builtContext =
                 Context.newBuilder(context)
                     .resolver(FieldValueResolver.INSTANCE, MethodValueResolver.INSTANCE)
                     .build();
 
-            result = layout.apply(finalContext);
+            result = layout_template.apply(builtContext);
           }
 
-          System.out.printf("Converting \"%s\".\n", absoluteRoot.relativize(file));
+          System.out.printf("Converting \"%s\".\n", filename);
           result = renderer.render(parser.parse(result));
 
           Files.write(target, result.getBytes(StandardCharsets.UTF_8));
         }
       } else {
-        System.out.printf("Copying \"%s\".\n", absoluteRoot.relativize(file));
+        System.out.printf("Copying \"%s\".\n", filename);
         Files.copy(file, target, StandardCopyOption.REPLACE_EXISTING);
       }
     }
@@ -201,9 +192,9 @@ public class Build implements Callable<Integer> {
     }
   }
 
-  class TemplateContext {
-    Page page;
+  static class TemplateContext {
     Config site;
+    Page page;
     String content;
   }
 }
