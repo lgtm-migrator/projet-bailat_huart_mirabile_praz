@@ -1,6 +1,19 @@
 package ch.heigvd.dil.commands;
 
+import ch.heigvd.dil.Config;
+import ch.heigvd.dil.Page;
 import ch.heigvd.dil.Utils;
+import com.github.jknack.handlebars.Context;
+import com.github.jknack.handlebars.EscapingStrategy;
+import com.github.jknack.handlebars.Handlebars;
+import com.github.jknack.handlebars.Helper;
+import com.github.jknack.handlebars.Options;
+import com.github.jknack.handlebars.Template;
+import com.github.jknack.handlebars.context.FieldValueResolver;
+import com.github.jknack.handlebars.context.MethodValueResolver;
+import com.github.jknack.handlebars.io.FileTemplateLoader;
+import com.github.jknack.handlebars.io.TemplateLoader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,6 +40,11 @@ public class Build implements Callable<Integer> {
   private Config config;
   private final Parser parser = Parser.builder().build();
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
+
+  private Handlebars handlebars = new Handlebars();
+  private Template layout;
+
+  private boolean useTemplates = false;
 
   @Override
   public Integer call() throws Exception {
@@ -66,6 +84,33 @@ public class Build implements Callable<Integer> {
         Files.list(root)
             .filter(v -> !excluded.contains(v.toAbsolutePath()))
             .collect(Collectors.toList());
+
+    if (Files.exists(templates)) {
+      TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
+      loader.setSuffix(".html");
+
+      handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
+      handlebars.registerHelper(
+          "include",
+          new Helper<String>() {
+            @Override
+            public Object apply(String s, Options options) throws IOException {
+              System.out.println("include helper " + s);
+
+              String ext = "." + FilenameUtils.getExtension(s);
+              if (loader.getSuffix().equals(ext)) {
+                Template template = options.handlebars.compile(FilenameUtils.getBaseName(s));
+                return template.apply(options.context);
+              }
+
+              return null;
+            }
+          });
+
+      layout = handlebars.compile("layout");
+
+      useTemplates = true;
+    }
 
     int result = 0;
     for (Path f : filtered) {
@@ -117,10 +162,28 @@ public class Build implements Callable<Integer> {
 
           String content = fileContent.substring(separatorIndex + Utils.META_SEPARATOR.length());
 
-          System.out.printf("Converting \"%s\".\n", absoluteRoot.relativize(file));
-          String html = renderer.render(parser.parse(content));
+          String result = content;
 
-          Files.write(target, html.getBytes(StandardCharsets.UTF_8));
+          if (useTemplates) {
+            System.out.printf("Applying templates on \"%s\".\n", absoluteRoot.relativize(file));
+
+            TemplateContext context = new TemplateContext();
+            context.page = page;
+            context.site = config;
+            context.content = content;
+
+            Context finalContext =
+                Context.newBuilder(context)
+                    .resolver(FieldValueResolver.INSTANCE, MethodValueResolver.INSTANCE)
+                    .build();
+
+            result = layout.apply(finalContext);
+          }
+
+          System.out.printf("Converting \"%s\".\n", absoluteRoot.relativize(file));
+          result = renderer.render(parser.parse(result));
+
+          Files.write(target, result.getBytes(StandardCharsets.UTF_8));
         }
       } else {
         System.out.printf("Copying \"%s\".\n", absoluteRoot.relativize(file));
@@ -136,5 +199,11 @@ public class Build implements Callable<Integer> {
     if (!Files.exists(parent)) {
       Files.createDirectory(parent);
     }
+  }
+
+  class TemplateContext {
+    Page page;
+    Config site;
+    String content;
   }
 }
