@@ -1,0 +1,33 @@
+name: CD - Release
+
+on:
+  push:
+    tags:
+      - "**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Set up JDK 11
+        uses: actions/setup-java@v2
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build with Maven
+        run: mvn clean assembly:assembly -DdescriptorId=jar-with-dependencies
+      - name: Package
+        run: |
+          cp target/*.jar .
+          tar cf statique-${GITHUB_REF#refs/*/}.tar.zst --zstd statique *.jar
+          zip -r statique-${GITHUB_REF#refs/*/}.zip statique *.jar
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          body: Mon génial texte de release
+          files: |
+            *.tar.zst
+            *.zip

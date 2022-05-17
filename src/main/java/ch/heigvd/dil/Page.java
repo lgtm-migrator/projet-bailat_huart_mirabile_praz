@@ -1,54 +1,74 @@
 package ch.heigvd.dil;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Set;
+import java.util.stream.Collectors;
+import org.yaml.snakeyaml.introspector.Property;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
 public class Page {
 
-    private Path filePath;
-    private String title;
-    private String author;
-    private String date;
+  private static Representer representer;
 
-    public String getTitle() {
-        return title;
-    }
+  static {
+    Representer representer =
+        new Representer() {
+          @Override
+          protected Set<Property> getProperties(Class<?> type) {
+            Set<Property> properties = super.getProperties(type);
+            return properties.stream()
+                .filter(v -> !v.getName().equals("filePath"))
+                .collect(Collectors.toSet());
+          }
+        };
+    representer.addClassTag(Page.class, Tag.MAP);
+  }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
+  private Path filePath;
+  private String title;
+  private String author;
+  private String date;
 
-    public String getAuthor() {
-        return author;
-    }
+  public String getTitle() {
+    return title;
+  }
 
-    public void setAuthor(String author) {
-        this.author = author;
-    }
+  public void setTitle(String title) {
+    this.title = title;
+  }
 
-    public String getDate() {
-        return date;
-    }
+  public String getAuthor() {
+    return author;
+  }
 
-    public void setDate(String date) {
-        this.date = date;
-    }
+  public void setAuthor(String author) {
+    this.author = author;
+  }
 
-    public Path getFilePath() {
-        return filePath;
-    }
+  public String getDate() {
+    return date;
+  }
 
-    public void setFilePath(Path filePath) {
-        this.filePath = filePath;
-    }
+  public void setDate(String date) {
+    this.date = date;
+  }
 
-    public void initPageFile() throws FileNotFoundException {
-        Utils.writeYamlFile(this, this.filePath.toFile());
-    }
+  public Path getFilePath() {
+    return filePath;
+  }
 
-    public void appendContent(String content) throws IOException {
-        Utils.appendToFile(content, this.filePath.toFile());
-    }
+  public void setFilePath(Path filePath) {
+    this.filePath = filePath;
+  }
+
+  public void initPageFile() throws FileNotFoundException {
+    Utils.writeYamlFile(this, this.filePath.toFile(), representer);
+  }
+
+  public void appendContent(String content) throws IOException {
+    Utils.appendToFile(content, this.filePath.toFile());
+  }
 }

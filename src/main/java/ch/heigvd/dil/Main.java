@@ -1,8 +1,11 @@
 package ch.heigvd.dil;
 
-import ch.heigvd.dil.commands.*;
-import picocli.CommandLine;
+import ch.heigvd.dil.commands.Build;
+import ch.heigvd.dil.commands.Clean;
+import ch.heigvd.dil.commands.Init;
+import ch.heigvd.dil.commands.Version;
 import java.util.concurrent.Callable;
+import picocli.CommandLine;
 
 @CommandLine.Command(name = "statique",
 subcommands = {
@@ -12,6 +15,7 @@ subcommands = {
         Serve.class,
         Version.class
 })
+
 public class Main implements Callable<Integer> {
 
     public static void main(String[] args) {
