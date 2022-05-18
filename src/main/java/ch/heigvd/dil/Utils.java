@@ -9,7 +9,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 public class Utils {
   private static final String EXECUTABLE_NAME = "statique";
-  private static final String VERSION = "0.0.1-pre_alpha";
+  private static final String VERSION = "0.1.0";
   private static final String COPYRIGHT_TEXT = "Copyright © 2022 Bailat, Huart, Mirabile, Praz";
   public static final String META_SEPARATOR = "---\n";
   public static final String TEMPLATES_SUFFIX = ".html";
