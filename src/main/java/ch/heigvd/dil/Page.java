@@ -14,7 +14,7 @@ public class Page {
   private static Representer representer;
 
   static {
-    Representer representer =
+    representer =
         new Representer() {
           @Override
           protected Set<Property> getProperties(Class<?> type) {

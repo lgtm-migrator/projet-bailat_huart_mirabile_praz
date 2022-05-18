@@ -4,24 +4,24 @@ import java.io.File;
 import java.io.FileNotFoundException;
 
 public class Config {
-  private String site_title;
+  private String title;
   private String site_desc;
   private String domain;
   private String site_path;
 
   public Config() {
-    site_title = "";
+    title = "";
     site_desc = "";
     domain = "";
     site_path = "";
   }
 
-  public String getSiteTitle() {
-    return site_title;
+  public String getTitle() {
+    return title;
   }
 
-  public void setSiteTitle(String site_title) {
-    this.site_title = site_title;
+  public void setTitle(String title) {
+    this.title = title;
   }
 
   public String getSiteDesc() {
