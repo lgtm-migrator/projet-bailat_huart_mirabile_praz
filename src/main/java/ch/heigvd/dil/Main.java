@@ -6,7 +6,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "statique",
-    subcommands = {Init.class, Build.class, Clean.class, Serve.class, Version.class})
+    subcommands = {Init.class, Build.class, Clean.class, Serve.class, Publish.class, Version.class})
 public class Main implements Callable<Integer> {
 
   public static void main(String[] args) {
