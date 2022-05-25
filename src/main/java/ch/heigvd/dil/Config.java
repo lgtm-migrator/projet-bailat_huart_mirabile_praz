@@ -8,12 +8,20 @@ public class Config {
   private String site_desc;
   private String domain;
   private String site_path;
+  private String ssh_hostname;
+  private String ssh_username;
+  private String ssh_password;
+  private String ssh_distpath;
 
   public Config() {
-    title = "";
-    site_desc = "";
-    domain = "";
-    site_path = "";
+    title        = "";
+    site_desc    = "";
+    domain       = "";
+    site_path    = "";
+    ssh_hostname = "";
+    ssh_username = "";
+    ssh_password = "";
+    ssh_distpath = "";
   }
 
   public String getTitle() {
@@ -46,6 +54,38 @@ public class Config {
 
   public void setSitePath(String site_path) {
     this.site_path = site_path;
+  }
+
+  public String getSsh_hostname() {
+    return ssh_hostname;
+  }
+
+  public String getSsh_username() {
+    return ssh_username;
+  }
+
+  public String getSsh_password() {
+    return ssh_password;
+  }
+
+  public String getSsh_distpath() {
+    return ssh_distpath;
+  }
+
+  public void setSsh_hostname(String ssh_hostname) {
+    this.ssh_hostname = ssh_hostname;
+  }
+
+  public void setSsh_username(String ssh_username) {
+    this.ssh_username = ssh_username;
+  }
+
+  public void setSsh_password(String ssh_password) {
+    this.ssh_password = ssh_password;
+  }
+
+  public void setSsh_distpath(String ssh_distpath) {
+    this.ssh_distpath = ssh_distpath;
   }
 
   public void writeConfigFile(File path) throws FileNotFoundException {
