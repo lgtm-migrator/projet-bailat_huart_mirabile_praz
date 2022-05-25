@@ -7,7 +7,6 @@ public class Config {
   private String title;
   private String site_desc;
   private String domain;
-  private String site_path;
   private String ssh_hostname;
   private String ssh_username;
   private String ssh_password;
@@ -17,7 +16,6 @@ public class Config {
     title        = "";
     site_desc    = "";
     domain       = "";
-    site_path    = "";
     ssh_hostname = "";
     ssh_username = "";
     ssh_password = "";
@@ -46,14 +44,6 @@ public class Config {
 
   public void setDomain(String domain) {
     this.domain = domain;
-  }
-
-  public String getSitePath() {
-    return site_path;
-  }
-
-  public void setSitePath(String site_path) {
-    this.site_path = site_path;
   }
 
   public String getSsh_hostname() {
