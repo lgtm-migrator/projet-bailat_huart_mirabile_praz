@@ -8,9 +8,8 @@
   <artifactId>statique</artifactId>
   <version>0.1.0</version>
 
-  <name>projet-bailat_huart_mirabile_praz</name>
-  <!-- FIXME change it to the project's website -->
-  <url>http://www.example.com</url>
+  <name>statique</name>
+  <url>https://github.com/dil-classroom/projet-bailat_huart_mirabile_praz</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -63,7 +62,7 @@
   </dependencies>
 
   <build>
-    <finalName>statique-0.1.0</finalName>
+    <finalName>statique</finalName>
     <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
       <plugins>
         <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
@@ -93,6 +92,8 @@
             <archive>
               <manifest>
                 <mainClass>ch.heigvd.dil.Main</mainClass>
+                <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
               </manifest>
             </archive>
           </configuration>

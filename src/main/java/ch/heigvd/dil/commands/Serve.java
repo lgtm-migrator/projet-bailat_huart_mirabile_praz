@@ -8,7 +8,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "serve")
+@Command(name = "serve", description = "Serve built site as a local website")
 public class Serve implements Callable<Integer> {
 
   @Parameters(index = "0", description = "Path to the website folder")

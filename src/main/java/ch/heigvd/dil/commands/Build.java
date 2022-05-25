@@ -24,7 +24,7 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "build")
+@Command(name = "build", description = "Build a static site")
 public class Build implements Callable<Integer> {
   @Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
   private Path root;
