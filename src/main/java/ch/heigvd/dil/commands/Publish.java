@@ -3,8 +3,6 @@ package ch.heigvd.dil.commands;
 import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Utils;
 import com.jcraft.jsch.*;
-import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
@@ -18,7 +16,7 @@ import java.util.concurrent.Callable;
 @Command(name = "publish")
 public class Publish implements Callable<Integer> {
 
-    private Config config;
+  private Config config;
 
   @Parameters(index = "0", description = "Path to the website folder")
   private Path path;
@@ -34,74 +32,71 @@ public class Publish implements Callable<Integer> {
     System.out.println("Building website...");
     new CommandLine(new Build()).execute(path.toString());
 
-    ChannelSftp channelSftp = setupJsch();
+    // Connects to the SSH server
+    java.util.Properties config2 = new java.util.Properties();
+    config2.put("StrictHostKeyChecking", "no");
+
+    JSch jsch = new JSch();
+    Session jschSession = jsch.getSession(config.getSsh_username(), config.getSsh_hostname());
+    jschSession.setConfig(config2);
+    jschSession.setPassword(config.getSsh_password());
+    jschSession.connect();
+
+    ChannelSftp channelSftp =  (ChannelSftp) jschSession.openChannel("sftp");
     channelSftp.connect();
 
-    String localFile = config.getSitePath() + '/' + Utils.Paths.BUILD_FOLDER;
+    // Local file path and destination path
+    String localFile = path.toString() + '/' + Utils.Paths.BUILD_FOLDER;
     String remoteDir = config.getSsh_distpath();
 
     recursiveFolderUpload(localFile, remoteDir, channelSftp);
 
-    System.out.println("Website published successfully");
+    channelSftp.disconnect();
+    jschSession.disconnect();
+
+    System.out.println("Website published successfully !");
 
     return 0;
   }
 
-    private ChannelSftp setupJsch() throws JSchException {
 
-        java.util.Properties config2 = new java.util.Properties();
-        config2.put("StrictHostKeyChecking", "no");
+  private static void recursiveFolderUpload(
+      String sourcePath, String destinationPath, ChannelSftp channel)
+      throws SftpException, FileNotFoundException {
 
-        JSch jsch = new JSch();
-        Session jschSession = jsch.getSession(config.getSsh_username(), config.getSsh_hostname());
-        jschSession.setConfig(config2);
-        jschSession.setPassword(config.getSsh_password());
-        jschSession.connect();
+    channel.cd(destinationPath);
+    // Gets all contained files in sourcePath
+    File sourceFile = new File(sourcePath);
+    File[] files = sourceFile.listFiles();
 
-        return (ChannelSftp) jschSession.openChannel("sftp");
-    }
-
-    private static void recursiveFolderUpload(String sourcePath, String destinationPath, ChannelSftp channel) throws SftpException, FileNotFoundException {
-
-        File sourceFile = new File(sourcePath);
-
-        if (sourceFile.isFile()) {
-
-            // copy if it is a file
-            channel.cd(destinationPath);
-            if (!sourceFile.getName().startsWith("."))
-                channel.put(new FileInputStream(sourceFile), sourceFile.getName(), ChannelSftp.OVERWRITE);
-
+    // If source file is not empty
+    if (files != null && !sourceFile.getName().startsWith(".")) {
+      // We browse its items
+      for (File f : files) {
+        // If it's a file we upload it
+        if (f.isFile()) {
+          String dstFileName = destinationPath + '/' + f.getName();
+          System.out.println("Publishing file " + dstFileName);
+          channel.put(
+              new FileInputStream(f), dstFileName, ChannelSftp.OVERWRITE);
+        // Else it's a folder
         } else {
+          SftpATTRS attrs = null;
 
-            System.out.println("inside else " + sourceFile.getAbsolutePath());
-            File[] files = sourceFile.listFiles();
+          // check if the folder is already existing, else create it
+          try {
+            attrs = channel.stat(destinationPath + "/" + f.getName());
+          } catch (Exception e) {
+            channel.mkdir(f.getName());
+          }
 
-            if (files != null && !sourceFile.getName().startsWith(".")) {
+          // Then cd into it
+          channel.cd(destinationPath + '/' + f.getName());
 
-                channel.cd(destinationPath);
-                SftpATTRS attrs = null;
-
-                // check if the directory is already existing
-                try {
-                    attrs = channel.stat(destinationPath + "/" + sourceFile.getName());
-                } catch (Exception e) {
-                    System.out.println(destinationPath + "/" + sourceFile.getName() + " not found");
-                }
-
-                // else create a directory
-                if (attrs != null) {
-                    System.out.println("Directory exists IsDir=" + attrs.isDir());
-                } else {
-                    System.out.println("Creating dir " + sourceFile.getName());
-                    channel.mkdir(sourceFile.getName());
-                }
-
-                for (File f: files) {
-                    recursiveFolderUpload(f.getAbsolutePath(), destinationPath + "/" + sourceFile.getName(), channel);
-                }
-
-            }
+          // And executes the function again in the newly created folder
+          recursiveFolderUpload(f.getAbsolutePath(), destinationPath + "/" + f.getName(), channel);
         }
+      }
     }
+  }
 }
