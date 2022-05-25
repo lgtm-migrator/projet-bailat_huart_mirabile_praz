@@ -2,6 +2,8 @@
 
 ## J. Bailat, H. Huart, T. Mirabile & T. Praz
 
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/dil-classroom/projet-bailat_huart_mirabile_praz.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dil-classroom/projet-bailat_huart_mirabile_praz/context:java)
+
 ## Manuel d'utilisation
 
 |Commande|Utilisation|
