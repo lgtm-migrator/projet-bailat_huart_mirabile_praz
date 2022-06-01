@@ -13,7 +13,7 @@ import java.util.concurrent.Callable;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
-@Command(name = "init")
+@Command(name = "init", description = "Initialize a static site project")
 public class Init implements Callable<Integer> {
   public final String MAINPAGE_FILENAME = "index.md";
 

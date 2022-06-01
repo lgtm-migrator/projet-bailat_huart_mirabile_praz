@@ -8,7 +8,7 @@ import org.apache.commons.io.FileUtils;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(name = "clean", description = "Clean a site (removing files under /build")
+@Command(name = "clean", description = "Clean a site (removing files under /build)")
 public class Clean implements Callable<Integer> {
   @CommandLine.Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
   private Path target;
