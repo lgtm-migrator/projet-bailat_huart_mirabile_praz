@@ -7,7 +7,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "statique",
-    subcommands = {Init.class, Build.class, Clean.class, Serve.class, Benchmark.class},
+    subcommands = {Init.class, Build.class, Clean.class, Serve.class, Publish.class, Benchmark.class},
     versionProvider = Main.ManifestVersionProvider.class)
 public class Main implements Callable<Integer> {
   @CommandLine.Option(
