@@ -1,9 +1,6 @@
 package ch.heigvd.dil;
 
-import ch.heigvd.dil.commands.Build;
-import ch.heigvd.dil.commands.Clean;
-import ch.heigvd.dil.commands.Init;
-import ch.heigvd.dil.commands.Serve;
+import ch.heigvd.dil.commands.*;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
 

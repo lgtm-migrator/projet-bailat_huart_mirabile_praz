@@ -13,9 +13,9 @@ public class Config {
   private String ssh_distpath;
 
   public Config() {
-    title        = "";
-    site_desc    = "";
-    domain       = "";
+    title = "";
+    site_desc = "";
+    domain = "";
     ssh_hostname = "";
     ssh_username = "";
     ssh_password = "";

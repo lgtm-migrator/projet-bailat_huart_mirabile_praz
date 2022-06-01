@@ -3,15 +3,14 @@ package ch.heigvd.dil.commands;
 import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Utils;
 import com.jcraft.jsch.*;
-import picocli.CommandLine;
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Parameters;
 
 @Command(name = "publish")
 public class Publish implements Callable<Integer> {
@@ -42,7 +41,7 @@ public class Publish implements Callable<Integer> {
     jschSession.setPassword(config.getSsh_password());
     jschSession.connect();
 
-    ChannelSftp channelSftp =  (ChannelSftp) jschSession.openChannel("sftp");
+    ChannelSftp channelSftp = (ChannelSftp) jschSession.openChannel("sftp");
     channelSftp.connect();
 
     // Local file path and destination path
@@ -58,7 +57,6 @@ public class Publish implements Callable<Integer> {
 
     return 0;
   }
-
 
   private static void recursiveFolderUpload(
       String sourcePath, String destinationPath, ChannelSftp channel)
@@ -77,9 +75,8 @@ public class Publish implements Callable<Integer> {
         if (f.isFile()) {
           String dstFileName = destinationPath + '/' + f.getName();
           System.out.println("Publishing file " + dstFileName);
-          channel.put(
-              new FileInputStream(f), dstFileName, ChannelSftp.OVERWRITE);
-        // Else it's a folder
+          channel.put(new FileInputStream(f), dstFileName, ChannelSftp.OVERWRITE);
+          // Else it's a folder
         } else {
           SftpATTRS attrs = null;
 
