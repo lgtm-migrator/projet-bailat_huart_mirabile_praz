@@ -39,7 +39,6 @@ public class Init implements Callable<Integer> {
 
     // Initializes the sites config
     Config config = new Config();
-    config.setSitePath(path);
     config.writeConfigFile(configFilePath.toFile());
 
     Page index = new Page();
