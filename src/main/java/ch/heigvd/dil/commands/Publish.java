@@ -45,8 +45,8 @@ public class Publish implements Callable<Integer> {
     channelSftp.connect();
 
     // Local file path and destination path
-    String localFile = path.toString() + '/' + Utils.Paths.BUILD_FOLDER;
-    String remoteDir = config.getSsh_distpath();
+    Path localFile = path.resolve(Utils.Paths.BUILD_FOLDER);
+    Path remoteDir = Path.of(config.getSsh_distpath());
 
     recursiveFolderUpload(localFile, remoteDir, channelSftp);
 
@@ -59,21 +59,24 @@ public class Publish implements Callable<Integer> {
   }
 
   private static void recursiveFolderUpload(
-      String sourcePath, String destinationPath, ChannelSftp channel)
+      Path sourcePath, Path destinationPath, ChannelSftp channel)
       throws SftpException, FileNotFoundException {
 
-    channel.cd(destinationPath);
+    channel.cd(destinationPath.toString());
     // Gets all contained files in sourcePath
-    File sourceFile = new File(sourcePath);
+    File sourceFile = sourcePath.toFile();
     File[] files = sourceFile.listFiles();
 
     // If source file is not empty
     if (files != null && !sourceFile.getName().startsWith(".")) {
       // We browse its items
       for (File f : files) {
+
+        Path dstFilePath = destinationPath.resolve(f.getName());
+        String dstFileName = dstFilePath.toString();
+
         // If it's a file we upload it
         if (f.isFile()) {
-          String dstFileName = destinationPath + '/' + f.getName();
           System.out.println("Publishing file " + dstFileName);
           channel.put(new FileInputStream(f), dstFileName, ChannelSftp.OVERWRITE);
           // Else it's a folder
@@ -82,16 +85,16 @@ public class Publish implements Callable<Integer> {
 
           // check if the folder is already existing, else create it
           try {
-            attrs = channel.stat(destinationPath + "/" + f.getName());
+            channel.stat(dstFileName);
           } catch (Exception e) {
             channel.mkdir(f.getName());
           }
 
           // Then cd into it
-          channel.cd(destinationPath + '/' + f.getName());
+          channel.cd(dstFileName);
 
           // And executes the function again in the newly created folder
-          recursiveFolderUpload(f.getAbsolutePath(), destinationPath + "/" + f.getName(), channel);
+          recursiveFolderUpload(f.toPath().toAbsolutePath(), dstFilePath, channel);
         }
       }
     }
