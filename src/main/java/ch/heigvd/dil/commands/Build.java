@@ -9,25 +9,30 @@ import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.MethodValueResolver;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 @Command(name = "build", description = "Build a static site")
 public class Build implements Callable<Integer> {
   @Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
   private Path root;
+
+  @CommandLine.Option(
+      names = {"--watch"},
+      description = "Rebuild on file changes")
+  private boolean watch;
 
   private Path absoluteRoot;
   private Path build;
@@ -101,6 +106,33 @@ public class Build implements Callable<Integer> {
       layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
 
       useTemplates = true;
+    }
+
+    if (watch) {
+      WatchService watchService = FileSystems.getDefault().newWatchService();
+
+      Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+        @Override
+        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+          dir.register(
+                  watchService,
+                  StandardWatchEventKinds.ENTRY_CREATE,
+                  StandardWatchEventKinds.ENTRY_DELETE,
+                  StandardWatchEventKinds.ENTRY_MODIFY);
+          return FileVisitResult.CONTINUE;
+        }
+      });
+
+      WatchKey key;
+      while ((key = watchService.take()) != null) {
+        for (WatchEvent<?> event : key.pollEvents()) {
+          Path name = ((WatchEvent<Path>)event).context();
+          
+        }
+        key.reset();
+      }
+
+      return 0;
     }
 
     int result = 0;
