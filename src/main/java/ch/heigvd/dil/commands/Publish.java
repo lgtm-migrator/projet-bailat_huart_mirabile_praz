@@ -5,7 +5,7 @@ import ch.heigvd.dil.Utils;
 import com.jcraft.jsch.*;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 import picocli.CommandLine;
@@ -21,7 +21,7 @@ public class Publish implements Callable<Integer> {
   private Path path;
 
   @Override
-  public Integer call() throws FileNotFoundException, JSchException, SftpException {
+  public Integer call() throws IOException, JSchException, SftpException {
 
     // Retrieves the config
     Path configPath = path.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
@@ -60,7 +60,7 @@ public class Publish implements Callable<Integer> {
 
   private static void recursiveFolderUpload(
       Path sourcePath, Path destinationPath, ChannelSftp channel)
-      throws SftpException, FileNotFoundException {
+      throws SftpException, IOException {
 
     channel.cd(destinationPath.toString());
     // Gets all contained files in sourcePath
@@ -78,10 +78,11 @@ public class Publish implements Callable<Integer> {
         // If it's a file we upload it
         if (f.isFile()) {
           System.out.println("Publishing file " + dstFileName);
-          channel.put(new FileInputStream(f), dstFileName, ChannelSftp.OVERWRITE);
+          FileInputStream fis = new FileInputStream(f);
+          channel.put(fis, dstFileName, ChannelSftp.OVERWRITE);
+          fis.close();
           // Else it's a folder
         } else {
-          SftpATTRS attrs = null;
 
           // check if the folder is already existing, else create it
           try {
