@@ -16,6 +16,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -49,6 +50,7 @@ public class Build implements Callable<Integer> {
 
     absoluteRoot = root.toAbsolutePath();
 
+    // Paths checks
     if (!Files.exists(root)) {
       System.out.printf(Utils.Messages.NOT_EXIST, absoluteRoot);
       return 1;
@@ -72,8 +74,6 @@ public class Build implements Callable<Integer> {
       return 1;
     }
 
-    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
-
     Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     List<Path> excluded = List.of(build.toAbsolutePath(), configPath, templates.toAbsolutePath());
@@ -83,6 +83,7 @@ public class Build implements Callable<Integer> {
             .filter(v -> !excluded.contains(v.toAbsolutePath()))
             .collect(Collectors.toList());
 
+    // Check for templates
     if (Files.exists(templates)) {
       TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
       loader.setSuffix(Utils.TEMPLATES_SUFFIX);
@@ -108,35 +109,71 @@ public class Build implements Callable<Integer> {
       useTemplates = true;
     }
 
+    parseConfig(configPath);
+
     if (watch) {
+      // Watch for changes
+      System.out.println("Watching for changes...");
       WatchService watchService = FileSystems.getDefault().newWatchService();
 
-      Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-        @Override
-        public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-          dir.register(
+      Files.walkFileTree(
+          root,
+          new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                throws IOException {
+              if (build.toAbsolutePath().equals(dir.toAbsolutePath())) {
+                return FileVisitResult.SKIP_SUBTREE;
+              }
+              dir.register(
                   watchService,
                   StandardWatchEventKinds.ENTRY_CREATE,
                   StandardWatchEventKinds.ENTRY_DELETE,
                   StandardWatchEventKinds.ENTRY_MODIFY);
-          return FileVisitResult.CONTINUE;
-        }
-      });
+              return FileVisitResult.CONTINUE;
+            }
+          });
 
       WatchKey key;
       while ((key = watchService.take()) != null) {
+        key.pollEvents();
         for (WatchEvent<?> event : key.pollEvents()) {
-          Path name = ((WatchEvent<Path>)event).context();
-          
+          Path path = ((WatchEvent<Path>) event).context();
+          System.out.println(path.toAbsolutePath().toString());
+          System.out.println(configPath.toAbsolutePath().toAbsolutePath());
+          if(path.toAbsolutePath() == configPath.toAbsolutePath()) {
+            System.out.println("Config changed");
+            parseConfig(configPath);
+          }
         }
+        Utils.Debouncer.debounce("BUILD", new Runnable() {
+          @Override
+          public void run() {
+            try {
+              buildPaths(filtered);
+
+              System.out.println("Watching for changes...");
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          }
+        }, 500);
         key.reset();
       }
 
       return 0;
+    } else {
+      return buildPaths(filtered);
     }
+  }
 
+  void parseConfig(Path configPath) throws FileNotFoundException {
+    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+  }
+
+  Integer buildPaths(List<Path> paths) throws IOException {
     int result = 0;
-    for (Path f : filtered) {
+    for (Path f : paths) {
       int subResult = recursiveBuild(f.toAbsolutePath());
       if (subResult != 0) {
         result = subResult;

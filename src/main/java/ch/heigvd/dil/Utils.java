@@ -1,6 +1,8 @@
 package ch.heigvd.dil;
 
 import java.io.*;
+import java.util.concurrent.*;
+
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -50,6 +52,36 @@ public class Utils {
     Yaml yaml = new Yaml(new Constructor(type));
     return yaml.load(stream);
   }
+
+  public static class Debouncer {
+    private static final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+    private static final ConcurrentHashMap<Object, Future<?>> delayedMap = new ConcurrentHashMap<>();
+
+    /**
+     * Debounces {@code callable} by {@code delay}, i.e., schedules it to be executed after {@code delay},
+     * or cancels its execution if the method is called with the same key within the {@code delay} again.
+     */
+    public static void debounce(final Object key, final Runnable runnable, long delay) {
+      final Future<?> prev = delayedMap.put(key, scheduler.schedule(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            runnable.run();
+          } finally {
+            delayedMap.remove(key);
+          }
+        }
+      }, delay, TimeUnit.MILLISECONDS));
+      if (prev != null) {
+        prev.cancel(true);
+      }
+    }
+
+    public void shutdown() {
+      scheduler.shutdownNow();
+    }
+  }
+
 
   public static class Messages {
     public static final String NOT_DIR = "Specified path \"%s\" is not a directory.\n";
