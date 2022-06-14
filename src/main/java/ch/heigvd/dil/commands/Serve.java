@@ -2,12 +2,11 @@ package ch.heigvd.dil.commands;
 
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import java.nio.file.Path;
+import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-
-import java.nio.file.Path;
-import java.util.concurrent.Callable;
 
 @Command(name = "serve", description = "Serve built site as a local website")
 public class Serve implements Callable<Integer> {
@@ -35,7 +34,7 @@ public class Serve implements Callable<Integer> {
             })
         .start(8080);
 
-    if(watch) {
+    if (watch) {
       // Build with watch
       new CommandLine(new Build()).execute(path.toString(), "--watch");
     }

@@ -9,21 +9,22 @@ import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.MethodValueResolver;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
-
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.stream.Collectors;
 
 @Command(name = "build", description = "Build a static site")
 public class Build implements Callable<Integer> {
@@ -43,6 +44,8 @@ public class Build implements Callable<Integer> {
   private Handlebars handlebars;
   private Template layout_template;
   private boolean useTemplates = false;
+
+  private static final String WATCHING = "Watching for changes ...";
 
   @Override
   public Integer call() throws Exception {
@@ -113,8 +116,10 @@ public class Build implements Callable<Integer> {
 
     if (watch) {
       // Watch for changes
-      System.out.println("Watching for changes...");
+      System.out.println(WATCHING);
       WatchService watchService = FileSystems.getDefault().newWatchService();
+
+      Map<WatchKey, Path> keys = new HashMap<>();
 
       Files.walkFileTree(
           root,
@@ -125,39 +130,51 @@ public class Build implements Callable<Integer> {
               if (build.toAbsolutePath().equals(dir.toAbsolutePath())) {
                 return FileVisitResult.SKIP_SUBTREE;
               }
-              dir.register(
-                  watchService,
-                  StandardWatchEventKinds.ENTRY_CREATE,
-                  StandardWatchEventKinds.ENTRY_DELETE,
-                  StandardWatchEventKinds.ENTRY_MODIFY);
+              WatchKey key =
+                  dir.register(
+                      watchService,
+                      StandardWatchEventKinds.ENTRY_CREATE,
+                      StandardWatchEventKinds.ENTRY_DELETE,
+                      StandardWatchEventKinds.ENTRY_MODIFY);
+              keys.put(key, dir);
               return FileVisitResult.CONTINUE;
             }
           });
 
+      final boolean[] configChanged = {false};
       WatchKey key;
       while ((key = watchService.take()) != null) {
-        key.pollEvents();
         for (WatchEvent<?> event : key.pollEvents()) {
-          Path path = ((WatchEvent<Path>) event).context();
-          System.out.println(path.toAbsolutePath().toString());
-          System.out.println(configPath.toAbsolutePath().toAbsolutePath());
-          if(path.toAbsolutePath() == configPath.toAbsolutePath()) {
-            System.out.println("Config changed");
-            parseConfig(configPath);
+          Path parent = keys.get(key);
+          Path context = ((WatchEvent<Path>) event).context();
+          Path path = parent.resolve(context).toAbsolutePath();
+
+          if (path.toAbsolutePath().equals(configPath)) {
+            configChanged[0] = true;
           }
         }
-        Utils.Debouncer.debounce("BUILD", new Runnable() {
-          @Override
-          public void run() {
-            try {
-              buildPaths(filtered);
 
-              System.out.println("Watching for changes...");
-            } catch (IOException e) {
-              throw new RuntimeException(e);
-            }
-          }
-        }, 500);
+        Utils.Debouncer.debounce(
+            "BUILD",
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  if (configChanged[0]) {
+                    System.out.println("Config changed");
+                    parseConfig(configPath);
+                    configChanged[0] = false;
+                  }
+
+                  buildPaths(filtered);
+
+                  System.out.println(WATCHING);
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            },
+            500);
         key.reset();
       }
 
