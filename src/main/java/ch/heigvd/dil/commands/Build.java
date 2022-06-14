@@ -31,6 +31,7 @@ public class Build extends WatchableCommand {
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
   private Handlebars handlebars;
   private Template layout_template;
+  private Path layout_template_path;
   private boolean useTemplates = false;
 
   private static final String WATCHING = "Watching for changes ...";
@@ -77,7 +78,7 @@ public class Build extends WatchableCommand {
     // Check for templates
     if (Files.exists(templates)) {
       TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
-      loader.setSuffix(Utils.TEMPLATES_SUFFIX);
+      loader.setSuffix("." + Utils.TEMPLATES_SUFFIX);
 
       handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
       handlebars.registerHelper(
@@ -85,7 +86,7 @@ public class Build extends WatchableCommand {
           new Helper<String>() {
             @Override
             public Object apply(String s, Options options) throws IOException {
-              String ext = "." + FilenameUtils.getExtension(s);
+              String ext = FilenameUtils.getExtension(s);
               if (Utils.TEMPLATES_SUFFIX.equals(ext)) {
                 Template template = options.handlebars.compile(FilenameUtils.getBaseName(s));
                 return template.apply(options.context);
@@ -93,6 +94,10 @@ public class Build extends WatchableCommand {
               return null;
             }
           });
+
+      buildLayoutTemplate();
+      layout_template_path =
+          templates.resolve(Utils.LAYOUT_TEMPLATE + "." + Utils.TEMPLATES_SUFFIX).toAbsolutePath();
 
       useTemplates = true;
     }
@@ -126,7 +131,8 @@ public class Build extends WatchableCommand {
             }
           });
 
-      final boolean[] configChanged = {false};
+      final RebuildTracker rebuild = new RebuildTracker();
+
       WatchKey key;
       while ((key = watchService.take()) != null) {
         for (WatchEvent<?> event : key.pollEvents()) {
@@ -135,7 +141,11 @@ public class Build extends WatchableCommand {
           Path path = parent.resolve(context).toAbsolutePath();
 
           if (path.toAbsolutePath().equals(configPath)) {
-            configChanged[0] = true;
+            rebuild.config = true;
+          } else if (useTemplates) {
+            if (path.toAbsolutePath().equals(layout_template_path)) {
+              rebuild.layout_template = true;
+            }
           }
         }
 
@@ -145,10 +155,16 @@ public class Build extends WatchableCommand {
               @Override
               public void run() {
                 try {
-                  if (configChanged[0]) {
-                    System.out.println("Config changed");
+                  if (rebuild.config) {
+                    System.out.println("Config changed.");
                     parseConfig(configPath);
-                    configChanged[0] = false;
+                    rebuild.config = false;
+                  }
+
+                  if (rebuild.layout_template) {
+                    System.out.println("Layout template changed.");
+                    buildLayoutTemplate();
+                    rebuild.layout_template = false;
                   }
 
                   buildPaths(filtered);
@@ -173,8 +189,11 @@ public class Build extends WatchableCommand {
     config = Utils.parseYamlFile(configPath.toFile(), Config.class);
   }
 
-  Integer buildPaths(List<Path> paths) throws IOException {
+  void buildLayoutTemplate() throws IOException {
     layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
+  }
+
+  Integer buildPaths(List<Path> paths) throws IOException {
     int result = 0;
     for (Path f : paths) {
       int subResult = recursiveBuild(f.toAbsolutePath());
@@ -268,5 +287,10 @@ public class Build extends WatchableCommand {
     Config site;
     Page page;
     String content;
+  }
+
+  static class RebuildTracker {
+    boolean config;
+    boolean layout_template;
   }
 }
