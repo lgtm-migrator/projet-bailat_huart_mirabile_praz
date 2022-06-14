@@ -4,23 +4,24 @@ import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Page;
 import ch.heigvd.dil.Utils;
 import com.github.jknack.handlebars.*;
-import com.github.jknack.handlebars.cache.ConcurrentMapTemplateCache;
 import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.MethodValueResolver;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 
@@ -28,6 +29,11 @@ import picocli.CommandLine.Parameters;
 public class Build implements Callable<Integer> {
   @Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
   private Path root;
+
+  @CommandLine.Option(
+      names = {"--watch"},
+      description = "Rebuild on file changes")
+  private boolean watch;
 
   private Path absoluteRoot;
   private Path build;
@@ -38,12 +44,15 @@ public class Build implements Callable<Integer> {
   private Template layout_template;
   private boolean useTemplates = false;
 
+  private static final String WATCHING = "Watching for changes ...";
+
   @Override
   public Integer call() throws Exception {
     System.out.printf("Building site at \"%s\" ...\n", root);
 
     absoluteRoot = root.toAbsolutePath();
 
+    // Paths checks
     if (!Files.exists(root)) {
       System.out.printf(Utils.Messages.NOT_EXIST, absoluteRoot);
       return 1;
@@ -67,8 +76,6 @@ public class Build implements Callable<Integer> {
       return 1;
     }
 
-    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
-
     Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
 
     List<Path> excluded = List.of(build.toAbsolutePath(), configPath, templates.toAbsolutePath());
@@ -78,12 +85,12 @@ public class Build implements Callable<Integer> {
             .filter(v -> !excluded.contains(v.toAbsolutePath()))
             .collect(Collectors.toList());
 
+    // Check for templates
     if (Files.exists(templates)) {
       TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
       loader.setSuffix(Utils.TEMPLATES_SUFFIX);
 
-      handlebars =
-          new Handlebars(loader).with(EscapingStrategy.NOOP).with(new ConcurrentMapTemplateCache());
+      handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
       handlebars.registerHelper(
           "include",
           new Helper<String>() {
@@ -98,13 +105,89 @@ public class Build implements Callable<Integer> {
             }
           });
 
-      layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
-
       useTemplates = true;
     }
 
+    parseConfig(configPath);
+
+    if (watch) {
+      // Watch for changes
+      System.out.println(WATCHING);
+      WatchService watchService = FileSystems.getDefault().newWatchService();
+
+      Map<WatchKey, Path> keys = new HashMap<>();
+
+      Files.walkFileTree(
+          root,
+          new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                throws IOException {
+              if (build.toAbsolutePath().equals(dir.toAbsolutePath())) {
+                return FileVisitResult.SKIP_SUBTREE;
+              }
+              WatchKey key =
+                  dir.register(
+                      watchService,
+                      StandardWatchEventKinds.ENTRY_CREATE,
+                      StandardWatchEventKinds.ENTRY_DELETE,
+                      StandardWatchEventKinds.ENTRY_MODIFY);
+              keys.put(key, dir);
+              return FileVisitResult.CONTINUE;
+            }
+          });
+
+      final boolean[] configChanged = {false};
+      WatchKey key;
+      while ((key = watchService.take()) != null) {
+        for (WatchEvent<?> event : key.pollEvents()) {
+          Path parent = keys.get(key);
+          Path context = ((WatchEvent<Path>) event).context();
+          Path path = parent.resolve(context).toAbsolutePath();
+
+          if (path.toAbsolutePath().equals(configPath)) {
+            configChanged[0] = true;
+          }
+        }
+
+        Utils.Debouncer.debounce(
+            "BUILD",
+            new Runnable() {
+              @Override
+              public void run() {
+                try {
+                  if (configChanged[0]) {
+                    System.out.println("Config changed");
+                    parseConfig(configPath);
+                    configChanged[0] = false;
+                  }
+
+                  buildPaths(filtered);
+
+                  System.out.println(WATCHING);
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
+              }
+            },
+            500);
+        key.reset();
+      }
+
+      return 0;
+    } else {
+      return buildPaths(filtered);
+    }
+  }
+
+  void parseConfig(Path configPath) throws FileNotFoundException {
+    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+  }
+
+  Integer buildPaths(List<Path> paths) throws IOException {
+    layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
     int result = 0;
-    for (Path f : filtered) {
+    for (Path f : paths) {
       int subResult = recursiveBuild(f.toAbsolutePath());
       if (subResult != 0) {
         result = subResult;
