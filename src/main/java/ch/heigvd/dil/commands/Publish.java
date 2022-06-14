@@ -7,29 +7,23 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.concurrent.Callable;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "publish")
-public class Publish implements Callable<Integer> {
+public class Publish extends SiteCommand {
 
   private Config config;
-
-  @Parameters(index = "0", description = "Path to the website folder")
-  private Path path;
 
   @Override
   public Integer call() throws IOException, JSchException, SftpException {
 
     // Retrieves the config
-    Path configPath = path.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
+    Path configPath = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
     config = Utils.parseYamlFile(configPath.toFile(), Config.class);
 
     // Build the site
-    System.out.println("Building website...");
-    new CommandLine(new Build()).execute(path.toString());
+    new CommandLine(new Build()).execute(root.toString());
 
     // Connects to the SSH server
     java.util.Properties config2 = new java.util.Properties();
@@ -45,7 +39,7 @@ public class Publish implements Callable<Integer> {
     channelSftp.connect();
 
     // Local file path and destination path
-    Path localFile = path.resolve(Utils.Paths.BUILD_FOLDER);
+    Path localFile = root.resolve(Utils.Paths.BUILD_FOLDER);
     Path remoteDir = Path.of(config.getSsh_distpath());
 
     recursiveFolderUpload(localFile, remoteDir, channelSftp);

@@ -16,25 +16,14 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "build", description = "Build a static site")
-public class Build implements Callable<Integer> {
-  @Parameters(index = "0", paramLabel = "PATH", description = "Path to site folder")
-  private Path root;
-
-  @CommandLine.Option(
-      names = {"--watch"},
-      description = "Rebuild on file changes")
-  private boolean watch;
-
+public class Build extends WatchableCommand {
   private Path absoluteRoot;
   private Path build;
   private Config config;
