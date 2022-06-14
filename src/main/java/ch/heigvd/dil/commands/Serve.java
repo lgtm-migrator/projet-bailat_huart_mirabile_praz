@@ -12,11 +12,11 @@ public class Serve extends WatchableCommand {
   @Override
   public Integer call() {
     if (!watch) {
-      // Build the site
+      // Build site
       new CommandLine(new Build()).execute(root.toString());
     }
 
-    // Serve the site
+    // Serve locally
     Javalin.create(
             config -> {
               config.addStaticFiles(

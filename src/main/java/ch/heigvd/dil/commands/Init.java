@@ -30,7 +30,7 @@ public class Init extends SiteCommand {
       Files.createFile(mainPagePath);
     }
 
-    // Initializes the sites config
+    // Initialize site config
     Config config = new Config();
     config.writeConfigFile(configFilePath.toFile());
 

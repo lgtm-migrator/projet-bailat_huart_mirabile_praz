@@ -13,25 +13,23 @@ import picocli.CommandLine.Command;
 @Command(name = "publish")
 public class Publish extends SiteCommand {
 
-  private Config config;
-
   @Override
   public Integer call() throws IOException, JSchException, SftpException {
 
-    // Retrieves the config
+    // Parse config
     Path configPath = root.resolve(Utils.Paths.CONFIG_FILENAME).toAbsolutePath();
-    config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+    Config config = Utils.parseYamlFile(configPath.toFile(), Config.class);
 
-    // Build the site
+    // Build site
     new CommandLine(new Build()).execute(root.toString());
 
-    // Connects to the SSH server
-    java.util.Properties config2 = new java.util.Properties();
-    config2.put("StrictHostKeyChecking", "no");
+    // Connect to SSH server
+    java.util.Properties sessionConfig = new java.util.Properties();
+    sessionConfig.put("StrictHostKeyChecking", "no");
 
     JSch jsch = new JSch();
     Session jschSession = jsch.getSession(config.getSsh_username(), config.getSsh_hostname());
-    jschSession.setConfig(config2);
+    jschSession.setConfig(sessionConfig);
     jschSession.setPassword(config.getSsh_password());
     jschSession.connect();
 
@@ -57,38 +55,33 @@ public class Publish extends SiteCommand {
       throws SftpException, IOException {
 
     channel.cd(destinationPath.toString());
-    // Gets all contained files in sourcePath
+    // Get all contained files in sourcePath
     File sourceFile = sourcePath.toFile();
     File[] files = sourceFile.listFiles();
 
-    // If source file is not empty
+    // If source file is not empty and not hidden file
     if (files != null && !sourceFile.getName().startsWith(".")) {
-      // We browse its items
       for (File f : files) {
-
         Path dstFilePath = destinationPath.resolve(f.getName());
         String dstFileName = dstFilePath.toString();
 
-        // If it's a file we upload it
+        // If file upload directly
         if (f.isFile()) {
           System.out.println("Publishing file " + dstFileName);
           FileInputStream fis = new FileInputStream(f);
           channel.put(fis, dstFileName, ChannelSftp.OVERWRITE);
           fis.close();
-          // Else it's a folder
         } else {
+          // Else recursively upload folder
 
-          // check if the folder is already existing, else create it
           try {
             channel.stat(dstFileName);
           } catch (Exception e) {
             channel.mkdir(f.getName());
           }
 
-          // Then cd into it
           channel.cd(dstFileName);
 
-          // And executes the function again in the newly created folder
           recursiveFolderUpload(f.toPath().toAbsolutePath(), dstFilePath, channel);
         }
       }
