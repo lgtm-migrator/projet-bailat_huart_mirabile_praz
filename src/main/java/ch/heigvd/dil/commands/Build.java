@@ -4,7 +4,6 @@ import ch.heigvd.dil.Config;
 import ch.heigvd.dil.Page;
 import ch.heigvd.dil.Utils;
 import com.github.jknack.handlebars.*;
-import com.github.jknack.handlebars.cache.ConcurrentMapTemplateCache;
 import com.github.jknack.handlebars.context.FieldValueResolver;
 import com.github.jknack.handlebars.context.MethodValueResolver;
 import com.github.jknack.handlebars.io.FileTemplateLoader;
@@ -91,8 +90,7 @@ public class Build implements Callable<Integer> {
       TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
       loader.setSuffix(Utils.TEMPLATES_SUFFIX);
 
-      handlebars =
-          new Handlebars(loader).with(EscapingStrategy.NOOP).with(new ConcurrentMapTemplateCache());
+      handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
       handlebars.registerHelper(
           "include",
           new Helper<String>() {
@@ -106,8 +104,6 @@ public class Build implements Callable<Integer> {
               return null;
             }
           });
-
-      layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
 
       useTemplates = true;
     }
@@ -189,6 +185,7 @@ public class Build implements Callable<Integer> {
   }
 
   Integer buildPaths(List<Path> paths) throws IOException {
+    layout_template = handlebars.compile(Utils.LAYOUT_TEMPLATE);
     int result = 0;
     for (Path f : paths) {
       int subResult = recursiveBuild(f.toAbsolutePath());
