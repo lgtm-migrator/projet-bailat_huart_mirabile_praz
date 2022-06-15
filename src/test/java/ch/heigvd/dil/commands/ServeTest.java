@@ -1,18 +1,17 @@
 package ch.heigvd.dil.commands;
 
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import picocli.CommandLine;
+import static org.junit.Assert.*;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
-
-import static org.junit.Assert.*;
+import org.apache.commons.io.FileUtils;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import picocli.CommandLine;
 
 public class ServeTest {
   static final Path TEST_FOLDER = Path.of("test");

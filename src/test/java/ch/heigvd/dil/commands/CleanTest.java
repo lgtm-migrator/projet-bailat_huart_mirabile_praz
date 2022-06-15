@@ -2,15 +2,8 @@ package ch.heigvd.dil.commands;
 
 import static org.junit.Assert.*;
 
-import ch.heigvd.dil.Utils;
-
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.IntFunction;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;

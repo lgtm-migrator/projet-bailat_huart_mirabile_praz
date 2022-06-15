@@ -19,14 +19,15 @@ public class Serve extends WatchableCommand {
     }
 
     try {
-    // Serve locally
-    server = Javalin.create(
-            config -> {
-              config.addStaticFiles(
-                  root.resolve(Utils.Paths.BUILD_FOLDER).toAbsolutePath().toString(),
-                  Location.EXTERNAL);
-            })
-        .start(8080);
+      // Serve locally
+      server =
+          Javalin.create(
+                  config -> {
+                    config.addStaticFiles(
+                        root.resolve(Utils.Paths.BUILD_FOLDER).toAbsolutePath().toString(),
+                        Location.EXTERNAL);
+                  })
+              .start(8080);
     } catch (Exception e) {
       System.out.println(e);
       return 1;
