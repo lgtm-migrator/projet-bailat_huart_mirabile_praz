@@ -10,7 +10,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 public class Utils {
   public static final String META_SEPARATOR = "---\n";
-  public static final String TEMPLATES_SUFFIX = ".html";
+  public static final String TEMPLATES_SUFFIX = "html";
   public static final String LAYOUT_TEMPLATE = "layout";
 
   public static void writeYamlFile(Object o, File filePath, Representer representer)
