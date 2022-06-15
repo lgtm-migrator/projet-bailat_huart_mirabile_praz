@@ -31,6 +31,8 @@ public class Build extends WatchableCommand {
   private final HtmlRenderer renderer = HtmlRenderer.builder().build();
   private Handlebars handlebars;
   private Template layout_template;
+
+  private Path templates_path;
   private Path layout_template_path;
   private boolean useTemplates = false;
 
@@ -66,9 +68,10 @@ public class Build extends WatchableCommand {
       return 1;
     }
 
-    Path templates = root.resolve(Utils.Paths.TEMPLATE_FOLDER);
+    templates_path = root.resolve(Utils.Paths.TEMPLATE_FOLDER).toAbsolutePath();
 
-    List<Path> excluded = List.of(build.toAbsolutePath(), configPath, templates.toAbsolutePath());
+    List<Path> excluded =
+        List.of(build.toAbsolutePath(), configPath, templates_path.toAbsolutePath());
 
     List<Path> filtered =
         Files.list(root)
@@ -76,30 +79,8 @@ public class Build extends WatchableCommand {
             .collect(Collectors.toList());
 
     // Check for templates
-    if (Files.exists(templates)) {
-      TemplateLoader loader = new FileTemplateLoader(templates.toAbsolutePath().toString());
-      loader.setSuffix("." + Utils.TEMPLATES_SUFFIX);
-
-      handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
-      handlebars.registerHelper(
-          "include",
-          new Helper<String>() {
-            @Override
-            public Object apply(String s, Options options) throws IOException {
-              String ext = FilenameUtils.getExtension(s);
-              if (Utils.TEMPLATES_SUFFIX.equals(ext)) {
-                Template template = options.handlebars.compile(FilenameUtils.getBaseName(s));
-                return template.apply(options.context);
-              }
-              return null;
-            }
-          });
-
-      buildLayoutTemplate();
-      layout_template_path =
-          templates.resolve(Utils.LAYOUT_TEMPLATE + "." + Utils.TEMPLATES_SUFFIX).toAbsolutePath();
-
-      useTemplates = true;
+    if (Files.exists(templates_path)) {
+      initHandlebars();
     }
 
     parseConfig(configPath);
@@ -145,6 +126,11 @@ public class Build extends WatchableCommand {
           // Checks for special cases
           if (path.toAbsolutePath().equals(configPath)) {
             rebuild.config = true;
+          } else if (path.toAbsolutePath().equals(templates_path)) {
+            String name = event.kind().name();
+            if (name.equals("ENTRY_CREATE") || name.equals("ENTRY_DELETE")) {
+              rebuild.templates = true;
+            }
           } else if (useTemplates) {
             if (path.toAbsolutePath().equals(layout_template_path)) {
               rebuild.layout_template = true;
@@ -163,6 +149,15 @@ public class Build extends WatchableCommand {
                     System.out.println("Config changed.");
                     parseConfig(configPath);
                     rebuild.config = false;
+                  }
+
+                  if (rebuild.templates) {
+                    System.out.println("Templates changed");
+                    useTemplates = Files.exists(templates_path);
+                    if (useTemplates) {
+                      initHandlebars();
+                    }
+                    rebuild.templates = false;
                   }
 
                   if (rebuild.layout_template) {
@@ -191,6 +186,34 @@ public class Build extends WatchableCommand {
 
   void parseConfig(Path configPath) throws FileNotFoundException {
     config = Utils.parseYamlFile(configPath.toFile(), Config.class);
+  }
+
+  void initHandlebars() throws IOException {
+    TemplateLoader loader = new FileTemplateLoader(templates_path.toAbsolutePath().toString());
+    loader.setSuffix("." + Utils.TEMPLATES_SUFFIX);
+
+    handlebars = new Handlebars(loader).with(EscapingStrategy.NOOP);
+    handlebars.registerHelper(
+        "include",
+        new Helper<String>() {
+          @Override
+          public Object apply(String s, Options options) throws IOException {
+            String ext = FilenameUtils.getExtension(s);
+            if (Utils.TEMPLATES_SUFFIX.equals(ext)) {
+              Template template = options.handlebars.compile(FilenameUtils.getBaseName(s));
+              return template.apply(options.context);
+            }
+            return null;
+          }
+        });
+
+    buildLayoutTemplate();
+    layout_template_path =
+        templates_path
+            .resolve(Utils.LAYOUT_TEMPLATE + "." + Utils.TEMPLATES_SUFFIX)
+            .toAbsolutePath();
+
+    useTemplates = true;
   }
 
   void buildLayoutTemplate() throws IOException {
@@ -298,6 +321,8 @@ public class Build extends WatchableCommand {
 
   static class RebuildTracker {
     boolean config;
+
+    boolean templates;
     boolean layout_template;
   }
 }
