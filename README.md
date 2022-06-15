@@ -1,7 +1,24 @@
 # statique - Générateur de site web statique en CLI
+
 Réalisé dans le cadre du projet de semestre du cours DIL à la HEIG-VD
 
-[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/dil-classroom/projet-bailat_huart_mirabile_praz.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dil-classroom/projet-bailat_huart_mirabile_praz/context:java)
+[![Language grade: Java](https://img.shields.io/lgtm/grade/java/g/dil-classroom/projet-bailat_huart_mirabile_praz.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/dil-classroom/projet-bailat_huart_mirabile_praz/context:java)- [statique - Générateur de site web statique en CLI](#statique---générateur-de-site-web-statique-en-cli)
+
+## Table des matières
+
+- [Prérequis d'utilisation](#prérequis-dutilisation)
+- [Téléchargement et utiisation](#téléchargement-et-utiisation)
+  - [Linux et MacOS](#linux-et-macos)
+  - [Windows](#windows)
+- [Commandes disponibles](#commandes-disponibles)
+  - [`init` - Création d'un nouveau site statique](#init---création-dun-nouveau-site-statique)
+  - [`build` - Construction du site](#build---construction-du-site)
+  - [`clean` - Supprimer les fichiers HTML du site](#clean---supprimer-les-fichiers-html-du-site)
+  - [`serve` - Publier le site à l'aide du serveur Web intégré](#serve---publier-le-site-à-laide-du-serveur-web-intégré)
+  - [`publish` - Publier le site sur un serveur SFTP distant](#publish---publier-le-site-sur-un-serveur-sftp-distant)
+  - [`version` - Afficher la version actuelle du générateur](#version---afficher-la-version-actuelle-du-générateur)
+- [Templating](#templating)
+- [Configuration du site](#configuration-du-site)
 
 ## Prérequis d'utilisation
 
@@ -50,7 +67,7 @@ statique build <chemin> [--watch]
 - Le paramètre `--watch` optionnel permet de demander au générateur de construire le site statique automatiquement à chaque modification d'un fichier source Markdown.
   - Pour stopper ce fonctionnement, il faut arrêter l'exécution de la commande à l'aide du raccourci clavier `Ctrl+C` dans le terminal.
 
-### `clean` - Supprimer les fichiers HTML du site 
+### `clean` - Supprimer les fichiers HTML du site
 
 ```text
 statique clean <chemin>
@@ -58,7 +75,6 @@ statique clean <chemin>
 
 - Remplacer `<chemin>` par le chemin relatif ou absolu vers le répertoire d'un site statique existant. Le répertoire **doit exister**.
 - **Attention !** Cette commande a pour effet d'écraser le répertoire `build/`. Donc toute donnée non sauvegardée sera perdue !
-
 
 ### `serve` - Publier le site à l'aide du serveur Web intégré
 
@@ -104,6 +120,7 @@ statique -version
   - `content` contenu de la page
 - Il est aussi possible d'inclure des autres templates via la directive `include`.
 - Example de template
+
 ```html
 <html lang="en">
 <head>
