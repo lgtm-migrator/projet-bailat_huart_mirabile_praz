@@ -51,7 +51,7 @@ Voici la liste des commandes disponibles.
 statique init <chemin>
 ```
 
-- Remplacer `<chemin>` par le chemin relatif ou absolu vers un répertoire. Le répertoire **ne doit pas déjà exister**.
+- Remplacer `<chemin>` par le chemin relatif ou absolu vers un répertoire. Le répertoire **ne doit pas déjà exister** ou **doit être vide**.
 - Après exécution, le répertoire spécifié est créé. Il contient deux fichiers :
   - `config.yml`, qui contient les informations de configuration du site. Se référer à la section [Configuration du site](#configuration-du-site) pour plus d'informations.
   - `index.md`, qui constitue la page d'accueil du site. Vous êtes libres de dupliquer ce fichier sous un autre nom pour créer d'autres pages.
