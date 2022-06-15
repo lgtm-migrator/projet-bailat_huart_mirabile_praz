@@ -90,9 +90,32 @@ statique -version
 
 - Le générateur ne dispose malheureusement pas de système de mise à jour automatique. Cette commande vous permet donc de voir quelle version est actuellement utilisée afin de mettre à jour le générateur si une nouvelle version est disponible.
 
-## Personnalisation du thème
+## Templating
 
-// TODO
+- Le templating permet d'insérer du contenu dans les pages en se basant sur les métadonnées du site et des pages. Le moteur de template utilisé est [Handlebars](https://github.com/jknack/handlebars.java).
+- La configuration minimale pour le templating est de créer un dossier `template` dans le dossier du site et y créer un fichier `layout.html`.
+- Les variables mise à disposition sont:
+  - `site.title` titre du site
+  - `site.site_desc` description du site
+  - `site.domain` domaine du site
+  - `page.author` auteur de le page
+  - `page.title` titre de la page
+  - `page.date` date de création
+  - `content` contenu de la page
+- Il est aussi possible d'inclure des autres templates via la directive `include`.
+- Example de template
+```html
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>{{ site.title }} | {{ page.title }}</title>
+</head>
+<body>
+{{ include "menu.html" }}
+{{ content }}
+</body>
+</html>
+```
 
 ## Configuration du site
 
@@ -108,6 +131,6 @@ ssh_username: ''  # Nom d'utilisateur du serveur SFTP
 ssh_password: ''  # Mot de passe du compte SFTP (oui...) 
 ```
 
-- Les champs `title` et `siteDesc` sont utilisables comme variables dans le thème personnalisé du site. Se référer à la section [Personnalisation du thème](#personnalisation-du-theme) pour plus d'informations.
+- Les champs `title` et `siteDesc` sont utilisables comme variables dans les templates du site. Se référer à la section [Templating](#templating) pour plus d'informations.
 
 - Les champs commençant par `ssh_` concernent les informations de connexion au serveur SFTP distant.
