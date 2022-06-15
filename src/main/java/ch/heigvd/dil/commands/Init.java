@@ -21,14 +21,15 @@ public class Init extends SiteCommand {
     Path configFilePath = root.resolve(Utils.Paths.CONFIG_FILENAME);
     Path mainPagePath = root.resolve(MAINPAGE_FILENAME);
 
-    if (Files.exists(root)) {
+    if (!Files.exists(root)) {
+      Files.createDirectory(root);
+    } else if (root.toFile().list().length != 0) {
       System.out.printf(Utils.Messages.ALREADY_EXISTS, root);
       return 1;
-    } else {
-      Files.createDirectory(root);
-      Files.createFile(configFilePath);
-      Files.createFile(mainPagePath);
     }
+
+    Files.createFile(configFilePath);
+    Files.createFile(mainPagePath);
 
     // Initialize site config
     Config config = new Config();
