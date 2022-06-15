@@ -17,6 +17,7 @@ import static org.junit.Assert.assertNotEquals;
 
 public class InitTest {
 
+
     static final String PATHDIR = "./testSite";
 
     @Test
@@ -30,11 +31,14 @@ public class InitTest {
 
         //delete folder and files
         deleteDirectory(new File(PATHDIR));
+
         assertEquals(1, result);
     }
 
     @Test
     public void shouldContainsDefaultFiles() throws IOException {
+
+        System.out.println("-- CONTAINS DEFAULT FILES");
 
         //define which files should exist
         List<String> defaultfiles = Arrays.asList("config.yaml", "index.md");
@@ -47,6 +51,23 @@ public class InitTest {
         deleteDirectory(new File(dirPath.toString()));
 
         assertEquals(true, files.containsAll(defaultfiles));
+
+    }
+
+    @Test
+    public void configShouldNotBeEmpty() throws IOException {
+
+        System.out.println("-- CONFIG FILE NOT EMPTY");
+
+        Path dirPath = Path.of(PATHDIR);
+        new CommandLine(new Init()).execute(dirPath.toString());
+
+        File configFile = new File(PATHDIR + "/config.yaml");
+
+        //delete folder and files
+        deleteDirectory(new File(PATHDIR));
+
+        assertNotEquals(0, configFile.length());
 
     }
 
