@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
-@Command(name = "publish")
+@Command(name = "publish", description = "Publish built site on remote SFTP server")
 public class Publish extends SiteCommand {
 
   @Override
