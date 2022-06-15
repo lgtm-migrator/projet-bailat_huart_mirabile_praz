@@ -25,7 +25,7 @@ public class BuildTest {
   @Test
   public void shouldExitIfNotExist() {
     System.out.println("-- NOT EXISTS");
-    int result = new CommandLine(new Build()).execute("FAIL");
+    int result = new CommandLine(new Build()).execute("thisfolderiswrong");
     assertNotEquals(0, result);
   }
 
